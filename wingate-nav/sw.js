@@ -1,5 +1,5 @@
 // עבודה גם בלי קליטה: הקבצים נשמרים במכשיר בזמן השימוש הראשון
-const CACHE = 'wingate-nav-v1'
+const CACHE = 'wingate-nav-v2'
 
 self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', (e) => {
@@ -13,8 +13,11 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url)
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return
+  // דף הבית וקבצי הנתונים נבדקים מול השרת בכל פעם, כדי שעדכון יגיע מיד ולא אחרי עשר דקות של מטמון
+  const fresh = e.request.mode === 'navigate' || url.pathname.endsWith('.json') || url.pathname.endsWith('.webmanifest')
+  const req = fresh ? new Request(e.request, { cache: 'no-cache' }) : e.request
   e.respondWith(
-    fetch(e.request)
+    fetch(req)
       .then((res) => {
         if (res.ok) {
           const copy = res.clone()
